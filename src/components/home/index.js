@@ -49,7 +49,7 @@ export const Home = (props) => {
               // reset state to default
               setConnectState(false);
               setMessageErr(null);
-              requestMetamaskErr(null);
+              setRequestMetamaskErr(null);
               // set data
               setAccount(accounts[0]);
               getETHBalance(accounts[0]);
