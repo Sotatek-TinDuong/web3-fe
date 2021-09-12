@@ -1,9 +1,9 @@
-import React, { useCallback, useEffect, useState } from "react";
+import React from "react";
 import { Link } from "react-router-dom";
 import "./index.scss";
 
 export const Header = (props) => {
-  const { address } = props
+  const { account } = props;
   const handleConnectWallet = async() => {
     await props.connectWallet();
   };
@@ -20,7 +20,7 @@ export const Header = (props) => {
               className="connect-wallet text-center truncate"
               onClick={() => handleConnectWallet()}
             >
-              {address ? `Connected to ${address}` : "Connect wallet"}
+              {account ? `Connected to ${account}` : "Connect wallet"}
             </button>
           </div>
         </div>

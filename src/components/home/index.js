@@ -1,49 +1,65 @@
-import React, { useCallback, useEffect, useState, useRef } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import { Header } from "../header/header";
 import { Footer } from "../footer/index";
+import { networkName, reloadPageTimeout } from "../../helpers";
 import "./index.scss";
 
 import Web3 from "web3";
 let web3;
-const { ethereum } = window;
 
 export const Home = (props) => {
-  const [address, setAddress] = useState(null);
+  const [account, setAccount] = useState(null);
   const [balance, setBalance] = useState(0);
-  const [network, setNetwork] = useState('');
+  const [network, setNetwork] = useState("");
   const [messageErr, setMessageErr] = useState(null);
+  const [requestMetamaskErr, setRequestMetamaskErr] = useState(null);
   const [connectState, setConnectState] = useState(false);
-  let [remainingSeconds, setRemainingSeconds] = useState(60);
+  let [remainingSeconds, setRemainingSeconds] = useState(4);
 
-  const loadWeb3 = useCallback(async () => {
+  const { ethereum } = window;
+
+  const handleConnectWallet = () => {
+    if (!account) {
+      loadWeb3();
+    }
+  };
+
+  const loadWeb3 = () => {
     try {
-      if (ethereum) {
-        setConnectState(true);
-        web3 = new Web3(ethereum);
-        await ethereum.enable();
-
-        const addresses = await web3.eth.getAccounts();
-        if (addresses.length) {
-          setAddressToLocalStorage(addresses[0]);
-          setAddress(addresses[0]);
-          getETHBalance(addresses[0]);
-          getNetwork();
-          setConnectState(false);
-        }
-      } else if (window.web3) {
-        web3 = new Web3(window.web3.currentProvider);
-      }
-
-      if (web3) {
-        console.log("web3 =>", web3);
-      } else {
+      if (typeof ethereum === "undefined") {
         const msg = (
           <p>
-            Not connected to a Web3 Wallet. <br /> Please install MetaMask.
+            Not connected to a Web3 Wallet. <br /> Please install and enable
+            MetaMask.
           </p>
         );
-        setConnectState(false);
         setMessageErr(msg);
+      } else {
+        setConnectState(true);
+        countDownConnection();
+
+        web3 = new Web3(ethereum);
+
+        ethereum
+          .request({
+            method: "eth_requestAccounts",
+          })
+          .then((accounts) => {
+            if (accounts.length) {
+              // reset state to default
+              setConnectState(false);
+              setMessageErr(null);
+              requestMetamaskErr(null);
+              // set data
+              setAccount(accounts[0]);
+              getETHBalance(accounts[0]);
+              getNetwork();
+            }
+          })
+          .catch((err) => {
+            const errorMsg = JSON.stringify(err);
+            setRequestMetamaskErr(JSON.parse(errorMsg).message);
+          });
       }
     } catch (error) {
       if (error) {
@@ -53,126 +69,101 @@ export const Home = (props) => {
         );
       }
     }
-  });
+  };
+
+  const countDownConnection = () => {
+    if (connectState && !requestMetamaskErr) {
+      if (remainingSeconds > 0) {
+        const countDown = setInterval(() => {
+          if (remainingSeconds <= 1) {
+            clearInterval(countDown);
+            setMessageErr("Connect time expired. Please connect again.");
+          }
+          let remaingTime = (remainingSeconds -= 1);
+          setRemainingSeconds(remaingTime);
+        }, 1000);
+      }
+    }
+  };
 
   const getETHBalance = (address) => {
-    web3 = new Web3(ethereum);
-    if (web3) {
-      web3.eth.getBalance(address, (err, result) => {
-        if (err) {
-          console.log(err);
+    web3.eth.getBalance(address, (err, result) => {
+      if (err) {
+        console.log(err);
+      } else {
+        const balance = web3.utils.fromWei(result, "ether");
+        setBalance(balance);
+      }
+    });
+  };
+
+  const getNetwork = () => {
+    web3.eth.net
+      .getId()
+      .then((netId) => {
+        setNetwork(networkName(netId));
+      })
+      .catch((err) => {
+        console.log("getNetwork", err);
+      });
+  };
+
+  const accountsChanged = () => {
+    if (ethereum) {
+      web3 = new Web3(ethereum);
+
+      ethereum.on("accountsChanged", (accounts) => {
+        if (accounts.length) {
+          setAccount(accounts[0]);
+          getETHBalance(accounts[0]);
+          getNetwork();
         } else {
-          const balance = web3.utils.fromWei(result, "ether");
-          setBalance(balance);
+          setAccount(null);
         }
       });
     }
   };
 
-  const getNetwork = () => {
-    web3 = new Web3(ethereum);
-    if (web3) {
-      web3.eth.net
-        .getId()
-        .then((netId) => {
-          switch (netId) {
-            case 1:
-              setNetwork("Mainnet");
-              break
-            case 3:
-              setNetwork("Ropsten");
-              break
-            case 4:
-              setNetwork("Rinkeby");
-              break
-            case 5:
-              setNetwork("Goerli");
-              break
-            case 42:
-              setNetwork("Kovan");
-              break
-            default:
-              break;
-          }
-        })
-        .catch((err) => {
-          console.log("getNetwork", err);
-        });
-    }
-  };
-
-  const setAddressToLocalStorage = (address) => {
-    localStorage.setItem("currentAddress", address);
-  };
-
-  const handleConnectWallet = () => {
-    const currentAddress = localStorage.getItem("currentAddress");
-    if (!currentAddress) {
-      loadWeb3();
-    } else if (address && address !== currentAddress) {
-      loadWeb3();
-    } else {
-      setAddress(currentAddress);
-      getETHBalance(currentAddress);
-      getNetwork(currentAddress);
-      return;
-    }
-  };
-
-  const checkConnection = () => {
-    if (connectState) {
-      if (remainingSeconds > 0) {
-        setInterval(() => {
-          let remaingTime = (remainingSeconds -= 1);
-          setRemainingSeconds(remaingTime);
-        }, 1000);
-      } else {
-        setMessageErr("Connect time expired. Please connect again.");
-        setTimeout(() => {
-          window.location.reload();
-        }, 1500);
-      }
-    }
-  };
-
   useEffect(() => {
-    checkConnection();
-    ethereum.on("accountsChanged", (accounts) => {
-      if (accounts.length > 0) {
-        setAddress(accounts[0]);
-      } else {
-        localStorage.removeItem("currentAddress");
-        setAddress(null);
-      }
-    });
-    handleConnectWallet();
+    // countDownConnection();
+    accountsChanged();
   });
 
   return (
     <>
-      <Header connectWallet={() => handleConnectWallet()} address={address} />
+      <Header connectWallet={() => handleConnectWallet()} account={account} />
       <div className="home-page bg-dark">
         <div className="content">
           <div className="container">
             <div className="wrap-content">
               <img src="/images/metamask-fox.png" alt="metamask" />
-              {messageErr ? (
+              {messageErr && (
                 <div className="err-message text-center text-orange">
                   {messageErr}
                 </div>
-              ) : null}
-              {connectState && remainingSeconds > 0 && (
+              )}
+              {requestMetamaskErr && (
+                <div className="err-message text-center text-orange">
+                  {requestMetamaskErr}
+                </div>
+              )}
+
+              {connectState && !requestMetamaskErr && (
                 <p>{`Connecting... (${remainingSeconds}s)`}</p>
               )}
-              <div className="account-info">
-                <p>
-                  <span className="label">-ETH Balance:</span>{balance} ETH
-                </p>
-                <p>
-                  <span className="label">-Network:</span>
-                  {network}
-                </p>
-              </div>
+
+              {ethereum && account ? (
+                <div className="account-info">
+                  <p>
+                    <span className="label">-ETH Balance:</span>
+                    {balance} ETH
+                  </p>
+                  <p>
+                    <span className="label">-Network:</span>
+                    {network}
+                  </p>
+                </div>
+              ) : null}
             </div>
           </div>
         </div>
