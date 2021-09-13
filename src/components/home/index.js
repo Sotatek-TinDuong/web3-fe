@@ -1,7 +1,7 @@
-import React, { useCallback, useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
 import { Header } from "../header/header";
 import { Footer } from "../footer/index";
-import { networkName, reloadPageTimeout } from "../../helpers";
+import { networkName, ethereumGlobal } from "../../helpers";
 import "./index.scss";
 
 import Web3 from "web3";
@@ -12,9 +12,7 @@ export const Home = (props) => {
   const [balance, setBalance] = useState(0);
   const [network, setNetwork] = useState("");
   const [messageErr, setMessageErr] = useState(null);
-  const [requestMetamaskErr, setRequestMetamaskErr] = useState(null);
-  const [connectState, setConnectState] = useState(false);
-  let [remainingSeconds, setRemainingSeconds] = useState(4);
+  const [requestMetamaskErr, setRequestMetamaskErr] = useState({});
 
   const { ethereum } = window;
 
@@ -35,9 +33,6 @@ export const Home = (props) => {
         );
         setMessageErr(msg);
       } else {
-        setConnectState(true);
-        countDownConnection();
-
         web3 = new Web3(ethereum);
 
         ethereum
@@ -47,9 +42,8 @@ export const Home = (props) => {
           .then((accounts) => {
             if (accounts.length) {
               // reset state to default
-              setConnectState(false);
               setMessageErr(null);
-              setRequestMetamaskErr(null);
+              setRequestMetamaskErr({});
               // set data
               setAccount(accounts[0]);
               getETHBalance(accounts[0]);
@@ -58,7 +52,7 @@ export const Home = (props) => {
           })
           .catch((err) => {
             const errorMsg = JSON.stringify(err);
-            setRequestMetamaskErr(JSON.parse(errorMsg).message);
+            setRequestMetamaskErr(JSON.parse(errorMsg));
           });
       }
     } catch (error) {
@@ -71,18 +65,29 @@ export const Home = (props) => {
     }
   };
 
-  const countDownConnection = () => {
-    if (connectState && !requestMetamaskErr) {
-      if (remainingSeconds > 0) {
-        const countDown = setInterval(() => {
-          if (remainingSeconds <= 1) {
-            clearInterval(countDown);
-            setMessageErr("Connect time expired. Please connect again.");
+  const loadExistAccountConnected = () => {
+    if (ethereumGlobal()) {
+      web3 = new Web3(ethereumGlobal());
+
+      ethereumGlobal()
+        .request({
+          method: "eth_requestAccounts",
+        })
+        .then((accounts) => {
+          if (accounts.length) {
+            // reset state to default
+            setMessageErr(null);
+            setRequestMetamaskErr({});
+            // set data
+            setAccount(accounts[0]);
+            getETHBalance(accounts[0]);
+            getNetwork();
           }
-          let remaingTime = (remainingSeconds -= 1);
-          setRemainingSeconds(remaingTime);
-        }, 1000);
-      }
+        })
+        .catch((err) => {
+          const errorMsg = JSON.stringify(err);
+          setRequestMetamaskErr(JSON.parse(errorMsg));
+        });
     }
   };
 
@@ -125,9 +130,9 @@ export const Home = (props) => {
   };
 
   useEffect(() => {
-    // countDownConnection();
+    loadExistAccountConnected();
     accountsChanged();
-  });
+  }, [account]);
 
   return (
     <>
@@ -137,33 +142,43 @@ export const Home = (props) => {
           <div className="container">
             <div className="wrap-content">
               <img src="/images/metamask-fox.png" alt="metamask" />
-              {messageErr && (
+              {!ethereumGlobal() ? (
                 <div className="err-message text-center text-orange">
-                  {messageErr}
+                  Not connected to a Web3 Wallet. <br /> Please install and
+                  enable MetaMask.
                 </div>
-              )}
-              {requestMetamaskErr && (
-                <div className="err-message text-center text-orange">
-                  {requestMetamaskErr}
-                </div>
-              )}
+              ) : (
+                <>
+                  {!account && (
+                    <div className="err-message text-center text-orange">
+                      Please connect wallet to use.
+                    </div>
+                  )}
+                  {messageErr && (
+                    <div className="err-message text-center text-orange">
+                      {messageErr}
+                    </div>
+                  )}
+                  {requestMetamaskErr.message && (
+                    <div className="err-message text-center text-orange">
+                      {requestMetamaskErr.message}
+                    </div>
+                  )}
 
-              {connectState && !requestMetamaskErr && (
-                <p>{`Connecting... (${remainingSeconds}s)`}</p>
+                  {ethereum && account ? (
+                    <div className="account-info">
+                      <p>
+                        <span className="label">-ETH Balance:</span>
+                        {balance} ETH
+                      </p>
+                      <p>
+                        <span className="label">-Network:</span>
+                        {network}
+                      </p>
+                    </div>
+                  ) : null}
+                </>
               )}
-
-              {ethereum && account ? (
-                <div className="account-info">
-                  <p>
-                    <span className="label">-ETH Balance:</span>
-                    {balance} ETH
-                  </p>
-                  <p>
-                    <span className="label">-Network:</span>
-                    {network}
-                  </p>
-                </div>
-              ) : null}
             </div>
           </div>
         </div>

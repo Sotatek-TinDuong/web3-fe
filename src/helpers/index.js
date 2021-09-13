@@ -1,3 +1,13 @@
+const ethereumGlobal = () => {
+  const { ethereum } = window;
+  if (typeof ethereum === "undefined") {
+    console.log("ethereum undefined");
+    return false;
+  } else {
+    return ethereum;
+  }
+};
+
 const networkName = (netId) => {
   switch (netId) {
     case 1:
@@ -21,4 +31,4 @@ const reloadPageTimeout = (time = 1500) => {
   }, time);
 };
 
-export { networkName, reloadPageTimeout };
+export { networkName, reloadPageTimeout, ethereumGlobal };
