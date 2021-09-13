@@ -128,10 +128,21 @@ export const Home = (props) => {
       });
     }
   };
+  const chainChanged = () => {
+    if (ethereum && account) {
+      web3 = new Web3(ethereum);
+
+      ethereum.on("chainChanged", (chainId) => {
+        getETHBalance(account);
+        getNetwork();
+      });
+    }
+  };
 
   useEffect(() => {
     loadExistAccountConnected();
     accountsChanged();
+    chainChanged();
   }, [account]);
 
   return (
