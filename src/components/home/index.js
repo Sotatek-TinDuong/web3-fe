@@ -177,16 +177,22 @@ export const Home = (props) => {
                   )}
 
                   {ethereum && account ? (
-                    <div className="account-info">
-                      <p>
-                        <span className="label">-ETH Balance:</span>
-                        {balance} ETH
-                      </p>
-                      <p>
-                        <span className="label">-Network:</span>
-                        {network}
-                      </p>
-                    </div>
+                    <>
+                      <div className="account-info">
+                        <p>
+                          <span className="label">-ETH Balance:</span>
+                          {balance} ETH
+                        </p>
+                        <p>
+                          <span className="label">-Network:</span>
+                          {network}
+                        </p>
+                      </div>
+                      <button>Create Contract</button>
+                      <button>Send ETH</button>
+                      <button>Deposit ETH</button>
+                      <button>Withdraw ETH</button>
+                    </>
                   ) : null}
                 </>
               )}
