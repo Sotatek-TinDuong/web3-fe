@@ -21,6 +21,7 @@ export const Home = (props) => {
       loadWeb3();
     }
   };
+  
 
   const loadWeb3 = () => {
     try {
