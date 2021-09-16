@@ -205,20 +205,29 @@ export const Home = (props) => {
   };
 
   const handleQueryTransfer = () => {
-    myContract.methods
-      .transfer()
-      .send({
-        from: account,
-        value: 100,
+    let web3 = new Web3(new Web3.providers.HttpProvider());
+    myContract.events
+      .Transfer(
+        {
+          filter: {
+            myIndexedParam: [20, 23],
+            myOtherIndexedParam: "0x123456789...",
+          },
+          fromBlock: 0,
+          toBlock: 5,
+        },
+        function (error, event) {
+          console.log("event =>", event);
+        }
+      )
+      .on("data", function (event) {
+        console.log("event 2 =>", event); // same results as the optional callback above
       })
-      .on("sent", function (send) {
-        setDepositStatus("Desposit processing, Please wait... ");
-      })
-      .on("receipt", function (receipt) {
-        setDepositStatus("Deposit Complete");
+      .on("changed", function (event) {
+        // remove event from local database
       })
       .on("error", function (error) {
-        setMessageErr(error.message);
+        console.log("error =>", error);
       });
   };
 
