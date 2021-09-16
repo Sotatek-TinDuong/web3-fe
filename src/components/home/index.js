@@ -165,14 +165,14 @@ export const Home = (props) => {
   };
 
   const handleDeposit = () => {
-    const amount = Number(despositAmount);
+    const amount = web3.utils.toWei(despositAmount + "", "ether");
     console.log(account);
 
     myContract.methods
       .deposit()
       .send({
         from: account,
-        value: web3.utils.toWei(amount + "", "ether"),
+        value: amount,
       })
       .on("sent", function (send) {
         setDepositStatus("Desposit processing, Please wait... ");
@@ -186,16 +186,19 @@ export const Home = (props) => {
   };
 
   const handleWithdraw = () => {
-    const amount = parseInt(despositAmount);
+    const amount = web3.utils.toWei(withdrawAmount + "", "ether");
+    console.log("object", amount);
 
     myContract.methods
-      .withdraw()
-      .send({ account })
+      .withdraw(amount)
+      .send({
+        from: account,
+      })
       .on("sent", function (send) {
-        setDepositStatus("Desposit processing, Please wait... ");
+        setDepositStatus("Withdraw processing, Please wait... ");
       })
       .on("receipt", function (receipt) {
-        setDepositStatus("Deposit Complete");
+        setDepositStatus("Withdraw Complete");
       })
       .on("error", function (error) {
         setMessageErr(error.message);
