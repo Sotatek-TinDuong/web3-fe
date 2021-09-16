@@ -187,7 +187,6 @@ export const Home = (props) => {
 
   const handleWithdraw = () => {
     const amount = web3.utils.toWei(withdrawAmount + "", "ether");
-    console.log("object", amount);
 
     myContract.methods
       .withdraw(amount)
