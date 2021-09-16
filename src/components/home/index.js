@@ -4,15 +4,24 @@ import { Footer } from "../footer/index";
 import { networkName, ethereumGlobal } from "../../helpers";
 import "./index.scss";
 
+import { CONTRACT_ADDRESS, ABI_ARRAY } from "../../contracts/contract";
+
 import Web3 from "web3";
 let web3;
+let myContract;
 
 export const Home = (props) => {
   const [account, setAccount] = useState(null);
   const [balance, setBalance] = useState(0);
+  const [weth, setWETHBalance] = useState(0);
   const [network, setNetwork] = useState("");
   const [messageErr, setMessageErr] = useState(null);
   const [requestMetamaskErr, setRequestMetamaskErr] = useState({});
+  const [despositAmount, setDespositAmount] = useState(0);
+  const [withdrawAmount, setWithdrawAmount] = useState(0);
+  const [actionMessage, setActionMessage] = useState(null);
+  const [depositStatus, setDepositStatus] = useState(null);
+  const [withdrawStatus, setWithdrawStatus] = useState(null);
 
   const { ethereum } = window;
 
@@ -21,7 +30,6 @@ export const Home = (props) => {
       loadWeb3();
     }
   };
-  
 
   const loadWeb3 = () => {
     try {
@@ -89,6 +97,14 @@ export const Home = (props) => {
           const errorMsg = JSON.stringify(err);
           setRequestMetamaskErr(JSON.parse(errorMsg));
         });
+
+      myContract = new web3.eth.Contract(ABI_ARRAY, CONTRACT_ADDRESS);
+      myContract.methods
+        .totalSupply()
+        .call()
+        .then((currentSupply) => {
+          setWETHBalance(currentSupply);
+        });
     }
   };
 
@@ -140,6 +156,70 @@ export const Home = (props) => {
     }
   };
 
+  const handleDepositAmountChange = (e) => {
+    setDespositAmount(e.target.value);
+  };
+
+  const handleWithdrawAmountChange = (e) => {
+    setWithdrawAmount(e.target.value);
+  };
+
+  const handleDeposit = () => {
+    const amount = parseInt(despositAmount);
+    console.log(account);
+
+    myContract.methods
+      .deposit()
+      .send({
+        from: account,
+        value: amount,
+      })
+      .on("sent", function (send) {
+        setDepositStatus("Desposit processing, Please wait... ");
+      })
+      .on("receipt", function (receipt) {
+        setDepositStatus("Deposit Complete");
+      })
+      .on("error", function (error) {
+        setMessageErr(error.message);
+      });
+  };
+
+  const handleWithdraw = () => {
+    const amount = parseInt(despositAmount);
+
+    myContract.methods
+      .withdraw()
+      .send({account})
+      .on("sent", function (send) {
+        setDepositStatus("Desposit processing, Please wait... ");
+      })
+      .on("receipt", function (receipt) {
+        setDepositStatus("Deposit Complete");
+      })
+      .on("error", function (error) {
+        setMessageErr(error.message);
+      });
+  };
+
+  const handleQueryTransfer = () => {
+    myContract.methods
+      .transfer()
+      .send({
+        from: account,
+        value: 100,
+      })
+      .on("sent", function (send) {
+        setDepositStatus("Desposit processing, Please wait... ");
+      })
+      .on("receipt", function (receipt) {
+        setDepositStatus("Deposit Complete");
+      })
+      .on("error", function (error) {
+        setMessageErr(error.message);
+      });
+  };
+
   useEffect(() => {
     loadExistAccountConnected();
     accountsChanged();
@@ -185,14 +265,51 @@ export const Home = (props) => {
                           {balance} ETH
                         </p>
                         <p>
+                          <span className="label">-WETH Balance:</span>
+                          {weth} ETH
+                        </p>
+                        <p>
                           <span className="label">-Network:</span>
                           {network}
                         </p>
                       </div>
-                      <button>Create Contract</button>
                       <button>Send ETH</button>
-                      <button>Deposit ETH</button>
-                      <button>Withdraw ETH</button>
+                      <button onClick={() => handleQueryTransfer()}>
+                        Query Transfer
+                      </button>
+                      <button onClick={() => handleDeposit()}>
+                        Deposit ETH
+                      </button>
+                      <button onClick={() => handleWithdraw()}>
+                        Withdraw ETH
+                      </button>
+
+                      <div className="deposit action">
+                        <span className="label">Desposit Amount: </span>
+                        <input
+                          type="number"
+                          step="0.01"
+                          value={despositAmount}
+                          onChange={(e) => handleDepositAmountChange(e)}
+                        ></input>
+                      </div>
+                      <div className="withdraw action">
+                        <span className="label">Withdraw Amount: </span>
+                        <input
+                          type="number"
+                          step="0.01"
+                          value={withdrawAmount}
+                          onChange={(e) => handleWithdrawAmountChange(e)}
+                        ></input>
+                      </div>
+                      {actionMessage && (
+                        <div className="err-message text-center text-orange">
+                          {actionMessage}
+                        </div>
+                      )}
+                      {depositStatus && (
+                        <div className="info-message">{depositStatus}</div>
+                      )}
                     </>
                   ) : null}
                 </>

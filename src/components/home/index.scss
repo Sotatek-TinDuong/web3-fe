@@ -27,10 +27,19 @@
           margin-bottom: 5px;
           .label {
             display: inline-block;
-            width: 150px
+            width: 200px
           }
         }
       }
+    }
+  }
+
+  .action {
+    margin-top: 20px;
+    input {
+      padding: 0 10px;
+      width: 80px;
+      height: 30px;
     }
   }
 }
