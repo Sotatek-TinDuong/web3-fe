@@ -202,7 +202,8 @@ export const Home = (props) => {
         setWithdrawStatus("Withdraw processing, Please wait... ");
       })
       .on("receipt", function (receipt) {
-        setWithdrawStatus("Withdraw Complete");
+        const txnh = receipt && receipt.transactionHash;
+        setWithdrawStatus(`Withdraw Complete, Transaction Hash: ${txnh}`);
       })
       .on("error", function (error) {
         setMessageErr(error.message);
@@ -222,6 +223,18 @@ export const Home = (props) => {
       setQueryTransferData(JSON.stringify(transfer));
       setQueryTransferStatus(null);
     }
+  };
+
+  const handleListenTransfer = async () => {
+    const lastestBlock = await web3.eth.getBlockNumber();
+
+    myContract.events
+      .Transfer({ fromBlock: lastestBlock - 100 }, function (error, event) {
+        console.log(event);
+      })
+      .on("data", (event) => console.log("event: ", event))
+      .on("changed", (changed) => console.log("changed: ", changed))
+      .on("error", (err) => console.log("error: ", err.message));
   };
 
   const handleInputAddressBalance = (e) => {
@@ -302,6 +315,9 @@ export const Home = (props) => {
                         {queryTransferStatus
                           ? queryTransferStatus
                           : "Query Transfer"}
+                      </button>
+                      <button onClick={() => handleListenTransfer()}>
+                        Listen Transfer
                       </button>
                       <button onClick={() => handleDeposit()}>
                         Deposit ETH
