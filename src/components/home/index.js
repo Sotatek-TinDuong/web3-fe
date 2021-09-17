@@ -23,6 +23,7 @@ export const Home = (props) => {
   const [depositStatus, setDepositStatus] = useState(null);
   const [withdrawStatus, setWithdrawStatus] = useState(null);
   const [queryTransferStatus, setQueryTransferStatus] = useState(null);
+  const [listenTransfer, setlistenTransfer] = useState(null);
   const [queryTransferData, setQueryTransferData] = useState(null);
   const [addressBalanace, setAddressBalanace] = useState("");
   const [balanceOfAddress, setBalanceOfAddress] = useState(null);
@@ -226,6 +227,7 @@ export const Home = (props) => {
   };
 
   const handleListenTransfer = async () => {
+    setlistenTransfer("Open console.log for view listen transfer.")
     const lastestBlock = await web3.eth.getBlockNumber();
 
     myContract.events
@@ -268,7 +270,7 @@ export const Home = (props) => {
         <div className="content">
           <div className="container">
             <div className="wrap-content">
-              <img src="/images/metamask-fox.png" alt="metamask" />
+              <img src="images/metamask-fox.png" alt="metamask" />
               {!ethereumGlobal() ? (
                 <div className="err-message text-center text-orange">
                   Not connected to a Web3 Wallet. <br /> Please install and
@@ -373,6 +375,9 @@ export const Home = (props) => {
                       )}
                       {withdrawStatus && (
                         <div className="info-message">{withdrawStatus}</div>
+                      )}
+                      {listenTransfer && (
+                        <div className="info-message">{listenTransfer}</div>
                       )}
                     </>
                   ) : null}

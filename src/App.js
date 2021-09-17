@@ -1,9 +1,4 @@
-import {
-  BrowserRouter,
-  Route,
-  Switch,
-  Router,
-} from "react-router-dom";
+import { BrowserRouter, Route, Switch, Router } from "react-router-dom";
 import { createBrowserHistory } from "history";
 import { ROUTERS } from "./router";
 
@@ -14,14 +9,10 @@ const history = createBrowserHistory();
 function App() {
   return (
     <div className="App">
-      <BrowserRouter>
-        <Router history={history}>
-          <div className="app-content">
-            <Switch>
-              <Route exact path="/" component={ROUTERS.component} />
-            </Switch>
-          </div>
-        </Router>
+      <BrowserRouter basename={window.location.pathname || ""}>
+        <div className="app-content">
+          <Route exact path="/" component={ROUTERS.component} />
+        </div>
       </BrowserRouter>
     </div>
   );

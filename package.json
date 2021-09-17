@@ -1,4 +1,5 @@
 {
+  "homepage": "http://sotatek-tinduong.github.io/web3-fe",
   "name": "hold-em",
   "version": "0.1.0",
   "private": true,
@@ -7,6 +8,7 @@
     "@testing-library/react": "^11.1.0",
     "@testing-library/user-event": "^12.1.10",
     "@web3-react/walletconnect-connector": "^6.2.4",
+    "gh-pages": "^3.2.3",
     "node-sass": "4.14.1",
     "react": "^17.0.2",
     "react-dom": "^17.0.2",
@@ -20,7 +22,9 @@
     "start": "PORT=3005 react-scripts start",
     "build": "react-scripts build",
     "test": "react-scripts test",
-    "eject": "react-scripts eject"
+    "eject": "react-scripts eject",
+    "predeploy": "npm run build",
+    "deploy": "gh-pages -d build"
   },
   "eslintConfig": {
     "extends": [
