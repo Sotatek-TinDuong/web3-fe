@@ -24,6 +24,8 @@ export const Home = (props) => {
   const [withdrawStatus, setWithdrawStatus] = useState(null);
   const [queryTransferStatus, setQueryTransferStatus] = useState(null);
   const [queryTransferData, setQueryTransferData] = useState(null);
+  const [addressBalanace, setAddressBalanace] = useState("");
+  const [balanceOfAddress, setBalanceOfAddress] = useState(null);
 
   const { ethereum } = window;
 
@@ -208,7 +210,7 @@ export const Home = (props) => {
 
   const handleQueryTransfer = async () => {
     setQueryTransferStatus("Querying...");
-    setQueryTransferData(null)
+    setQueryTransferData(null);
     const lastestBlock = await web3.eth.getBlockNumber();
     const transfer = await myContract.getPastEvents("Transfer", {
       fromBlock: lastestBlock - 100,
@@ -218,6 +220,24 @@ export const Home = (props) => {
     if (transfer) {
       setQueryTransferData(JSON.stringify(transfer));
       setQueryTransferStatus(null);
+    }
+  };
+
+  const handleInputAddressBalance = (e) => {
+    setAddressBalanace(e.target.value);
+  };
+
+  const handleGetBalance = async () => {
+    try {
+      const balanceOf = await myContract.methods
+        .balanceOf(addressBalanace)
+        .call();
+      const balance = web3.utils.fromWei(balanceOf + "", "ether");
+      setBalanceOfAddress(balance);
+      console.log(balance);
+    } catch (err) {
+      setBalanceOfAddress(null);
+      console.log(err);
     }
   };
 
@@ -274,7 +294,9 @@ export const Home = (props) => {
                           {network}
                         </p>
                       </div>
-                      <button>Send ETH</button>
+                      <button onClick={() => handleGetBalance()}>
+                        Get Balance
+                      </button>
                       <button onClick={() => handleQueryTransfer()}>
                         {queryTransferStatus
                           ? queryTransferStatus
@@ -305,7 +327,21 @@ export const Home = (props) => {
                           onChange={(e) => handleWithdrawAmountChange(e)}
                         ></input>
                       </div>
-                      <div className="query-data">{queryTransferData ? queryTransferData : ""}</div>
+
+                      <div className="get-balance action">
+                        <span className="label">Get Balance: </span>
+                        <input
+                          style={{ width: "335px" }}
+                          type="text"
+                          value={addressBalanace}
+                          onChange={(e) => handleInputAddressBalance(e)}
+                        ></input>
+                        <span> {balanceOfAddress ? balanceOfAddress : ""} </span>
+                      </div>
+
+                      <div className="query-data">
+                        {queryTransferData ? queryTransferData : ""}
+                      </div>
                       {actionMessage && (
                         <div className="err-message text-center text-orange">
                           {actionMessage}
