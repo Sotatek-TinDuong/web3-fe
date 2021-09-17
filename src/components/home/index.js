@@ -78,7 +78,7 @@ export const Home = (props) => {
     }
   };
 
-  const loadExistAccountConnected = () => {
+  const loadExistAccountConnected = async () => {
     if (ethereumGlobal()) {
       web3 = new Web3(ethereumGlobal());
 
@@ -95,19 +95,14 @@ export const Home = (props) => {
             setAccount(accounts[0]);
             getETHBalance(accounts[0]);
             getNetwork();
+
+            myContract = new web3.eth.Contract(ABI_ARRAY, CONTRACT_ADDRESS);
+            getWETHBalance(accounts[0]);
           }
         })
         .catch((err) => {
           const errorMsg = JSON.stringify(err);
           setRequestMetamaskErr(JSON.parse(errorMsg));
-        });
-
-      myContract = new web3.eth.Contract(ABI_ARRAY, CONTRACT_ADDRESS);
-      myContract.methods
-        .totalSupply()
-        .call()
-        .then((currentSupply) => {
-          setWETHBalance(currentSupply);
         });
     }
   };
@@ -121,6 +116,12 @@ export const Home = (props) => {
         setBalance(balance);
       }
     });
+  };
+
+  const getWETHBalance = async (address) => {
+    const balanceOf = await myContract.methods.balanceOf(address).call();
+    const balance = web3.utils.fromWei(balanceOf + "", "ether");
+    setWETHBalance(balance);
   };
 
   const getNetwork = () => {
@@ -333,10 +334,14 @@ export const Home = (props) => {
                         <input
                           style={{ width: "335px" }}
                           type="text"
+                          placeholder="input address"
                           value={addressBalanace}
                           onChange={(e) => handleInputAddressBalance(e)}
                         ></input>
-                        <span> {balanceOfAddress ? balanceOfAddress : ""} </span>
+                        <span>
+                          {" "}
+                          {balanceOfAddress ? balanceOfAddress : ""}{" "}
+                        </span>
                       </div>
 
                       <div className="query-data">

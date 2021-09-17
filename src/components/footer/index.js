@@ -3,7 +3,7 @@ import "./index.scss";
 export const Footer = (props) => {
   return (
     <div className="footer">
-    {/* <div className="footer"> */}
+      {/* <div className="footer"> */}
       <div className="wrapper">
         <div className="container">
           <div className="content">
@@ -11,17 +11,14 @@ export const Footer = (props) => {
               <ul>
                 <li>
                   <a
-                    href="https://etherscan.io"
+                    href="https://rinkeby.etherscan.io/address/0xc778417e063141139fce010982780140aa0cd5ab#code"
                     target="_blank"
                   >
                     Contract
                   </a>
                 </li>
                 <li>
-                  <a
-                    href="https://opensea.io"
-                    target="_blank"
-                  >
+                  <a href="https://opensea.io" target="_blank">
                     Opensea
                   </a>
                 </li>
