@@ -22,6 +22,8 @@ export const Home = (props) => {
   const [actionMessage, setActionMessage] = useState(null);
   const [depositStatus, setDepositStatus] = useState(null);
   const [withdrawStatus, setWithdrawStatus] = useState(null);
+  const [queryTransferStatus, setQueryTransferStatus] = useState(null);
+  const [queryTransferData, setQueryTransferData] = useState(null);
 
   const { ethereum } = window;
 
@@ -194,41 +196,29 @@ export const Home = (props) => {
         from: account,
       })
       .on("sent", function (send) {
-        setDepositStatus("Withdraw processing, Please wait... ");
+        setWithdrawStatus("Withdraw processing, Please wait... ");
       })
       .on("receipt", function (receipt) {
-        setDepositStatus("Withdraw Complete");
+        setWithdrawStatus("Withdraw Complete");
       })
       .on("error", function (error) {
         setMessageErr(error.message);
       });
   };
 
-  const handleQueryTransfer = () => {
-    let web3 = new Web3(new Web3.providers.HttpProvider());
-    myContract.events
-      .Transfer(
-        {
-          filter: {
-            myIndexedParam: [20, 23],
-            myOtherIndexedParam: "0x123456789...",
-          },
-          fromBlock: 0,
-          toBlock: 5,
-        },
-        function (error, event) {
-          console.log("event =>", event);
-        }
-      )
-      .on("data", function (event) {
-        console.log("event 2 =>", event); // same results as the optional callback above
-      })
-      .on("changed", function (event) {
-        // remove event from local database
-      })
-      .on("error", function (error) {
-        console.log("error =>", error);
-      });
+  const handleQueryTransfer = async () => {
+    setQueryTransferStatus("Querying...");
+    setQueryTransferData(null)
+    const lastestBlock = await web3.eth.getBlockNumber();
+    const transfer = await myContract.getPastEvents("Transfer", {
+      fromBlock: lastestBlock - 100,
+      toBlock: "latest",
+    });
+
+    if (transfer) {
+      setQueryTransferData(JSON.stringify(transfer));
+      setQueryTransferStatus(null);
+    }
   };
 
   useEffect(() => {
@@ -286,7 +276,9 @@ export const Home = (props) => {
                       </div>
                       <button>Send ETH</button>
                       <button onClick={() => handleQueryTransfer()}>
-                        Query Transfer
+                        {queryTransferStatus
+                          ? queryTransferStatus
+                          : "Query Transfer"}
                       </button>
                       <button onClick={() => handleDeposit()}>
                         Deposit ETH
@@ -313,6 +305,7 @@ export const Home = (props) => {
                           onChange={(e) => handleWithdrawAmountChange(e)}
                         ></input>
                       </div>
+                      <div className="query-data">{queryTransferData ? queryTransferData : ""}</div>
                       {actionMessage && (
                         <div className="err-message text-center text-orange">
                           {actionMessage}
@@ -320,6 +313,9 @@ export const Home = (props) => {
                       )}
                       {depositStatus && (
                         <div className="info-message">{depositStatus}</div>
+                      )}
+                      {withdrawStatus && (
+                        <div className="info-message">{withdrawStatus}</div>
                       )}
                     </>
                   ) : null}
